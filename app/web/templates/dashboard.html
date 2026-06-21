@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | World Cup Squad Advisor{% endblock %}
+
+{% block content %}
+<section class="stats-grid">
+    {% for stat in stats %}
+    <div class="stat-card">
+        <div class="stat-label">{{ stat.label }}</div>
+        <div class="stat-value">{{ stat.value }}</div>
+        <div class="stat-hint">{{ stat.hint }}</div>
+    </div>
+    {% endfor %}
+</section>
+
+<section class="section-grid two-up">
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>Group Distribution</h2>
+        </div>
+        <div class="mini-table">
+            {% for row in group_rows %}
+            <div class="mini-table-row">
+                <span>{{ row.group_name }}</span>
+                <strong>{{ row.teams }} teams</strong>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>Most Experienced Squads</h2>
+        </div>
+        <div class="mini-table">
+            {% for team in most_capped %}
+            <div class="mini-table-row">
+                <a href="/teams/{{ team.team_id }}">{{ team.team_name }}</a>
+                <strong>{{ team.total_caps }} caps</strong>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</section>
+
+<section class="section-grid two-up">
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>Top Scoring Squads</h2>
+        </div>
+        <div class="mini-table">
+            {% for team in most_goals %}
+            <div class="mini-table-row">
+                <a href="/teams/{{ team.team_id }}">{{ team.team_name }}</a>
+                <strong>{{ team.total_goals }} goals</strong>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>Recent Team Reports</h2>
+        </div>
+        <div class="mini-table">
+            {% if recent_team_reports %}
+                {% for report in recent_team_reports %}
+                <div class="mini-table-row stacked-row">
+                    <div>
+                        <a href="/teams/{{ report.team_id }}">{{ report.team_name }}</a>
+                        <div class="row-note">{{ report.summary[:120] }}{% if report.summary|length > 120 %}...{% endif %}</div>
+                    </div>
+                    <strong>{{ report.prompt_version or "-" }}</strong>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="mini-table-row">
+                    <span>No AI team reports generated yet.</span>
+                    <strong>-</strong>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+</section>
+
+<section class="panel-section">
+    <div class="section-head">
+        <h2>Recent Player Reports</h2>
+    </div>
+    <div class="mini-table">
+        {% if recent_player_reports %}
+            {% for report in recent_player_reports %}
+            <div class="mini-table-row stacked-row">
+                <div>
+                    <a href="/players/{{ report.player_id }}">{{ report.full_name }}</a>
+                    <div class="row-note">{{ report.team_name }} - {{ report.summary[:120] }}{% if report.summary|length > 120 %}...{% endif %}</div>
+                </div>
+                <strong>{{ report.prompt_version or "-" }}</strong>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="mini-table-row">
+                <span>No AI player reports generated yet.</span>
+                <strong>-</strong>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="panel-section">
+    <div class="section-head">
+        <h2>Recent Advisor Sessions</h2>
+    </div>
+    <div class="mini-table">
+        {% if recent_advisor_sessions %}
+            {% for session in recent_advisor_sessions %}
+            <a class="session-row" href="/advisor?session_id={{ session.session_id }}">
+                <strong>{{ session.title }}</strong>
+                <div class="row-note">{{ session.message_count }} messages · updated {{ session.updated_at_label }}</div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="mini-table-row">
+                <span>No advisor sessions saved yet.</span>
+                <strong>-</strong>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

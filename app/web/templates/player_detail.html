@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player.full_name }} | World Cup Squad Advisor{% endblock %}
+
+{% block content %}
+<section class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Team</div>
+        <div class="stat-value compact">{{ player.team_name }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Position</div>
+        <div class="stat-value compact">{{ player.position_group or "-" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Caps</div>
+        <div class="stat-value">{{ player.caps }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Goals</div>
+        <div class="stat-value">{{ player.goals }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Club</div>
+        <div class="stat-value compact">{{ player.club_name or "-" }}</div>
+    </div>
+</section>
+
+<section class="section-grid two-up">
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>AI Player Report</h2>
+        </div>
+        {% if player.player_report %}
+        <div class="report-block">
+            <div class="report-item">
+                <div class="report-label">Summary</div>
+                <p>{{ player.player_report.summary }}</p>
+            </div>
+            <div class="report-item">
+                <div class="report-label">Strengths</div>
+                <p>{{ player.player_report.strengths }}</p>
+            </div>
+            <div class="report-item">
+                <div class="report-label">Concerns</div>
+                <p>{{ player.player_report.concerns }}</p>
+            </div>
+            <div class="report-item">
+                <div class="report-label">Role Tags</div>
+                <p>{{ player.player_report.role_tags }}</p>
+            </div>
+            <div class="report-foot">
+                <span>{{ player.player_report.evidence_note }}</span>
+                <strong>{{ player.player_report.prompt_version or "-" }} | {{ player.player_report.model_name or "-" }}</strong>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-note">
+            No saved AI player report yet. Run <code>uv run python main.py generate-player-report "{{ player.player_id }}" --confirm-save</code>.
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>Player Context</h2>
+            <a href="/teams/{{ player.team_id }}">Team Page</a>
+        </div>
+        <div class="mini-table">
+            <div class="mini-table-row"><span>Shirt Number</span><strong>{{ player.shirt_number or "-" }}</strong></div>
+            <div class="mini-table-row"><span>Birth Date</span><strong>{{ player.birth_date or "-" }}</strong></div>
+            <div class="mini-table-row"><span>Captain</span><strong>{{ "yes" if player.is_captain else "no" }}</strong></div>
+            <div class="mini-table-row"><span>Caps Rank In Team</span><strong>{{ player.caps_rank_in_team or "-" }}</strong></div>
+            <div class="mini-table-row"><span>Goals Rank In Team</span><strong>{{ player.goals_rank_in_team or "-" }}</strong></div>
+            <div class="mini-table-row"><span>Same Position Peers</span><strong>{{ player.same_position_peer_count }}</strong></div>
+        </div>
+    </section>
+</section>
+
+<section class="section-grid two-up">
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>Same Position Peers</h2>
+        </div>
+        <div class="mini-table">
+            {% if player.same_position_peers %}
+                {% for peer in player.same_position_peers %}
+                <div class="mini-table-row stacked-row">
+                    <div>
+                        <a href="/players/{{ peer.player_id }}">{{ peer.full_name }}</a>
+                        <div class="row-note">{{ peer.club_name or "-" }}</div>
+                    </div>
+                    <strong>{{ peer.caps }} caps / {{ peer.goals }} goals</strong>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="mini-table-row">
+                    <span>No same-position peers found.</span>
+                    <strong>-</strong>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>Team Leaders</h2>
+        </div>
+        <div class="stacked-mini">
+            <div>
+                <h3>Most Capped</h3>
+                <div class="mini-table">
+                    {% for row in player.team_top_caps %}
+                    <div class="mini-table-row">
+                        <a href="/players/{{ row.player_id }}">{{ row.full_name }}</a>
+                        <strong>{{ row.caps }} caps</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div>
+                <h3>Top Scorers</h3>
+                <div class="mini-table">
+                    {% for row in player.team_top_goals %}
+                    <div class="mini-table-row">
+                        <a href="/players/{{ row.player_id }}">{{ row.full_name }}</a>
+                        <strong>{{ row.goals }} goals</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+</section>
+{% endblock %}

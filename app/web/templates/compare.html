@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Teams | World Cup Squad Advisor{% endblock %}
+
+{% block content %}
+<section class="panel-section">
+    <form method="get" action="/compare" class="compare-form">
+        <label class="field">
+            <span>Left Team</span>
+            <select name="left_team_id">
+                <option value="">Select a team</option>
+                {% for team in teams %}
+                <option value="{{ team.id }}" {% if selected_left_team_id == team.id %}selected{% endif %}>
+                    {{ team.name }} ({{ team.group_name }})
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label class="field">
+            <span>Right Team</span>
+            <select name="right_team_id">
+                <option value="">Select a team</option>
+                {% for team in teams %}
+                <option value="{{ team.id }}" {% if selected_right_team_id == team.id %}selected{% endif %}>
+                    {{ team.name }} ({{ team.group_name }})
+                </option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit">Compare</button>
+    </form>
+</section>
+
+{% if comparison %}
+<section class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">{{ comparison.left.team_name }}</div>
+        <div class="stat-value compact">{{ comparison.left.group_name }}</div>
+        <div class="stat-hint">{{ comparison.left.squad_size }} players</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">{{ comparison.right.team_name }}</div>
+        <div class="stat-value compact">{{ comparison.right.group_name }}</div>
+        <div class="stat-hint">{{ comparison.right.squad_size }} players</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Caps Edge</div>
+        <div class="stat-value compact">
+            {% if comparison.left.total_caps >= comparison.right.total_caps %}
+                {{ comparison.left.team_name }}
+            {% else %}
+                {{ comparison.right.team_name }}
+            {% endif %}
+        </div>
+        <div class="stat-hint">{{ comparison.left.total_caps }} vs {{ comparison.right.total_caps }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Goals Edge</div>
+        <div class="stat-value compact">
+            {% if comparison.left.total_goals >= comparison.right.total_goals %}
+                {{ comparison.left.team_name }}
+            {% else %}
+                {{ comparison.right.team_name }}
+            {% endif %}
+        </div>
+        <div class="stat-hint">{{ comparison.left.total_goals }} vs {{ comparison.right.total_goals }}</div>
+    </div>
+</section>
+
+<section class="panel-section">
+    <div class="section-head">
+        <h2>Roster Metrics</h2>
+    </div>
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>{{ comparison.left.team_name }}</th>
+                    <th>{{ comparison.right.team_name }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td>Squad Size</td><td>{{ comparison.left.squad_size }}</td><td>{{ comparison.right.squad_size }}</td></tr>
+                <tr><td>Total Caps</td><td>{{ comparison.left.total_caps }}</td><td>{{ comparison.right.total_caps }}</td></tr>
+                <tr><td>Average Caps</td><td>{{ "%.1f"|format(comparison.left.average_caps) }}</td><td>{{ "%.1f"|format(comparison.right.average_caps) }}</td></tr>
+                <tr><td>Total Goals</td><td>{{ comparison.left.total_goals }}</td><td>{{ comparison.right.total_goals }}</td></tr>
+                <tr><td>Goalkeepers</td><td>{{ comparison.left.position_counts.get('GK', 0) }}</td><td>{{ comparison.right.position_counts.get('GK', 0) }}</td></tr>
+                <tr><td>Defenders</td><td>{{ comparison.left.position_counts.get('DF', 0) }}</td><td>{{ comparison.right.position_counts.get('DF', 0) }}</td></tr>
+                <tr><td>Midfielders</td><td>{{ comparison.left.position_counts.get('MF', 0) }}</td><td>{{ comparison.right.position_counts.get('MF', 0) }}</td></tr>
+                <tr><td>Forwards</td><td>{{ comparison.left.position_counts.get('FW', 0) }}</td><td>{{ comparison.right.position_counts.get('FW', 0) }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="section-grid two-up">
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>{{ comparison.left.team_name }} Leaders</h2>
+        </div>
+        <div class="stacked-mini">
+            <div>
+                <h3>Most Capped</h3>
+                <div class="mini-table">
+                    {% for row in comparison.left.top_caps[:3] %}
+                    <div class="mini-table-row">
+                        <span>{{ row.full_name }}</span>
+                        <strong>{{ row.caps }} caps</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div>
+                <h3>Top Scorers</h3>
+                <div class="mini-table">
+                    {% for row in comparison.left.top_goals[:3] %}
+                    <div class="mini-table-row">
+                        <span>{{ row.full_name }}</span>
+                        <strong>{{ row.goals }} goals</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>{{ comparison.right.team_name }} Leaders</h2>
+        </div>
+        <div class="stacked-mini">
+            <div>
+                <h3>Most Capped</h3>
+                <div class="mini-table">
+                    {% for row in comparison.right.top_caps[:3] %}
+                    <div class="mini-table-row">
+                        <span>{{ row.full_name }}</span>
+                        <strong>{{ row.caps }} caps</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div>
+                <h3>Top Scorers</h3>
+                <div class="mini-table">
+                    {% for row in comparison.right.top_goals[:3] %}
+                    <div class="mini-table-row">
+                        <span>{{ row.full_name }}</span>
+                        <strong>{{ row.goals }} goals</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+</section>
+{% endif %}
+{% endblock %}

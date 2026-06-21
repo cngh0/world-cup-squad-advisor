@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Advisor | World Cup Squad Advisor{% endblock %}
+
+{% block content %}
+<section class="advisor-layout">
+    <aside class="panel-section advisor-sidebar">
+        <div class="section-head">
+            <h2>Sessions</h2>
+            <a class="secondary-link" href="/advisor">New Session</a>
+        </div>
+        <div class="mini-table">
+            {% if sessions %}
+                {% for session in sessions %}
+                <a class="session-row {% if active_session_id == session.session_id %}is-active{% endif %}" href="/advisor?session_id={{ session.session_id }}">
+                    <strong>{{ session.title }}</strong>
+                    <div class="row-note">{{ session.message_count }} messages · updated {{ session.updated_at_label }}</div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="empty-note">No advisor sessions saved yet.</div>
+            {% endif %}
+        </div>
+    </aside>
+
+    <div class="advisor-main">
+        <section class="panel-section">
+            <div class="section-head">
+                <h2>{% if current_session %}Continue Session{% else %}Start Session{% endif %}</h2>
+                {% if current_session %}
+                <span class="session-meta">session {{ current_session.session_id }}</span>
+                {% endif %}
+            </div>
+            <form method="post" action="/advisor" class="advisor-form-stack">
+                {% if active_session_id %}
+                <input type="hidden" name="session_id" value="{{ active_session_id }}">
+                {% endif %}
+                <div class="preset-grid">
+                    {% for preset in presets %}
+                    <button type="submit" name="preset_id" value="{{ preset.id }}" class="preset-card" formnovalidate>
+                        <strong>{{ preset.label }}</strong>
+                        <span>{{ preset.description }}</span>
+                    </button>
+                    {% endfor %}
+                </div>
+                <label class="field advisor-field">
+                    <span>Question</span>
+                    <textarea name="question" rows="4" placeholder="Ask something like: Between Japan and Algeria, which squad looks more balanced right now?"></textarea>
+                </label>
+                <label class="field">
+                    <span>Scope Teams</span>
+                    <select name="team_id" multiple size="10">
+                        {% for team in teams %}
+                        <option value="{{ team.id }}" {% if team.id in selected_team_ids %}selected{% endif %}>
+                            {{ team.name }} ({{ team.group_name }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <button type="submit">{% if current_session %}Send Follow-Up{% else %}Ask Advisor{% endif %}</button>
+            </form>
+        </section>
+
+        {% if current_session %}
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Messages</div>
+                <div class="stat-value">{{ current_session.message_count }}</div>
+                <div class="stat-hint">saved in this thread</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Scoped Teams</div>
+                <div class="stat-value">{{ current_session.selected_team_ids|length }}</div>
+                <div class="stat-hint">selected for the latest turn</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Created</div>
+                <div class="stat-value compact">{{ current_session.created_at_label }}</div>
+                <div class="stat-hint">first question time</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Updated</div>
+                <div class="stat-value compact">{{ current_session.updated_at_label }}</div>
+                <div class="stat-hint">latest saved turn</div>
+            </div>
+        </section>
+
+        <section class="panel-section">
+            <div class="section-head">
+                <h2>Conversation</h2>
+                <span class="session-meta">{{ current_session.title }}</span>
+            </div>
+            <div class="conversation-thread">
+                {% for message in current_session.messages %}
+                <article class="conversation-message {{ message.role }}">
+                    <div class="message-meta">
+                        <strong>{{ "You" if message.role == "user" else "Advisor" }}</strong>
+                        <span>{{ message.created_at_label }}</span>
+                    </div>
+                    {% if message.task_label %}
+                    <div class="message-route">
+                        <span class="route-badge">{{ message.task_label }}</span>
+                        {% if message.task_type %}
+                        <span class="route-code">{{ message.task_type }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <p>{{ message.content }}</p>
+
+                    {% if message.tool_trace %}
+                    <div class="message-subsection">
+                        <div class="report-label">Tool Trace</div>
+                        <ul class="clean-list compact-list">
+                            {% for item in message.tool_trace %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    {% if message.role == "assistant" and message.generated %}
+                        {% if message.key_points %}
+                        <div class="message-subsection">
+                            <div class="report-label">Key Points</div>
+                            <ul class="clean-list">
+                                {% for point in message.key_points %}
+                                <li>{{ point }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        {% if message.follow_up_suggestions %}
+                        <div class="message-subsection">
+                            <div class="report-label">Follow-Up Suggestions</div>
+                            <ul class="clean-list">
+                                {% for item in message.follow_up_suggestions %}
+                                <li>{{ item }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                        <div class="report-foot">
+                            <span>{{ message.scope_team_count or 0 }} teams / {{ message.scope_player_count or 0 }} players</span>
+                            <strong>{{ message.model_name or "-" }}</strong>
+                        </div>
+                    {% endif %}
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        {% if latest_assistant_message %}
+        <section class="section-grid two-up">
+            <section class="panel-section">
+                <div class="section-head">
+                    <h2>Latest Advisor Output</h2>
+                </div>
+                <div class="report-block">
+                    {% if latest_assistant_message.task_label %}
+                    <div class="report-item">
+                        <div class="report-label">Task Route</div>
+                        <div class="route-line">
+                            <span class="route-badge">{{ latest_assistant_message.task_label }}</span>
+                            {% if latest_assistant_message.task_type %}
+                            <span class="route-code">{{ latest_assistant_message.task_type }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="report-item">
+                        <div class="report-label">Answer</div>
+                        <p>{{ latest_assistant_message.content }}</p>
+                    </div>
+                    {% if latest_assistant_message.tool_trace %}
+                    <div class="report-item">
+                        <div class="report-label">Tool Trace</div>
+                        <ul class="clean-list compact-list">
+                            {% for item in latest_assistant_message.tool_trace %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    {% if latest_assistant_message.key_points %}
+                    <div class="report-item">
+                        <div class="report-label">Key Points</div>
+                        <ul class="clean-list">
+                            {% for point in latest_assistant_message.key_points %}
+                            <li>{{ point }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    {% if latest_assistant_message.follow_up_suggestions %}
+                    <div class="report-item">
+                        <div class="report-label">Follow-Up Suggestions</div>
+                        <ul class="clean-list">
+                            {% for item in latest_assistant_message.follow_up_suggestions %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    <div class="report-foot">
+                        <span>Prompt {{ latest_assistant_message.prompt_version or "-" }}</span>
+                        <strong>{{ latest_assistant_message.model_name or "-" }}</strong>
+                    </div>
+                    {% if latest_assistant_message.follow_up_suggestions %}
+                    <div class="followup-actions">
+                        {% for item in latest_assistant_message.follow_up_suggestions %}
+                        <form method="post" action="/advisor" class="followup-form">
+                            <input type="hidden" name="session_id" value="{{ active_session_id }}">
+                            <input type="hidden" name="question" value="{{ item }}">
+                            {% for team_id in selected_team_ids %}
+                            <input type="hidden" name="team_id" value="{{ team_id }}">
+                            {% endfor %}
+                            <button type="submit" class="followup-button">{{ item }}</button>
+                        </form>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="panel-section">
+                <div class="section-head">
+                    <h2>Latest Citations</h2>
+                </div>
+                <div class="stacked-mini">
+                    <div>
+                        <h3>Teams</h3>
+                        <div class="mini-table">
+                            {% if cited_teams %}
+                                {% for team in cited_teams %}
+                                <div class="mini-table-row">
+                                    <a href="/teams/{{ team.team_id }}">{{ team.team_name }}</a>
+                                    <strong>{{ team.team_id }}</strong>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="mini-table-row">
+                                    <span>No specific team citations.</span>
+                                    <strong>-</strong>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <h3>Players</h3>
+                        <div class="mini-table">
+                            {% if cited_players %}
+                                {% for player in cited_players %}
+                                <div class="mini-table-row stacked-row">
+                                    <div>
+                                        <a href="/players/{{ player.player_id }}">{{ player.full_name }}</a>
+                                        <div class="row-note">{{ player.team_name }}</div>
+                                    </div>
+                                    <strong>{{ player.player_id }}</strong>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="mini-table-row">
+                                    <span>No specific player citations.</span>
+                                    <strong>-</strong>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+        {% endif %}
+        {% else %}
+        <section class="panel-section">
+            <div class="empty-note">
+                Start a new advisor session, optionally scope it to one or more teams, and the system will save the conversation so you can come back to it later.
+            </div>
+        </section>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

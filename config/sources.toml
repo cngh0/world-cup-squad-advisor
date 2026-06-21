@@ -1,0 +1,17 @@
+[[sources]]
+id = "fifa_teams"
+name = "FIFA World Cup 2026 Teams"
+base_url = "https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/teams"
+source_type = "official"
+coverage_type = "teams"
+reliability_level = "high"
+enabled = true
+
+[[sources]]
+id = "wikipedia_world_cup_squads"
+name = "Wikipedia 2026 FIFA World Cup squads"
+base_url = "https://en.wikipedia.org/wiki/2026_FIFA_World_Cup_squads"
+source_type = "wikipedia"
+coverage_type = "mixed"
+reliability_level = "medium"
+enabled = true

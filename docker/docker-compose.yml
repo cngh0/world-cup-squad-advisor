@@ -1,0 +1,23 @@
+name: world-cup-squad-advisor-lab
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: world-cup-squad-advisor-lab-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-world_cup_squad_advisor_lab}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - world_cup_squad_advisor_lab_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  world_cup_squad_advisor_lab_postgres_data:
+    name: world-cup-squad-advisor-lab-postgres-data

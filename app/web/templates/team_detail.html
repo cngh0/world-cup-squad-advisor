@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}{{ team.team_name }} | World Cup Squad Advisor{% endblock %}
+
+{% block content %}
+<section class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Group</div>
+        <div class="stat-value compact">{{ team.group_name }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Squad Size</div>
+        <div class="stat-value">{{ team.squad_size }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Caps</div>
+        <div class="stat-value">{{ team.total_caps }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Goals</div>
+        <div class="stat-value">{{ team.total_goals }}</div>
+    </div>
+</section>
+
+<section class="section-grid two-up">
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>AI Team Report</h2>
+        </div>
+        {% if team_report %}
+        <div class="report-block">
+            <div class="report-item">
+                <div class="report-label">Summary</div>
+                <p>{{ team_report.summary }}</p>
+            </div>
+            <div class="report-item">
+                <div class="report-label">Style Of Play</div>
+                <p>{{ team_report.style_of_play }}</p>
+            </div>
+            <div class="report-item">
+                <div class="report-label">Strengths</div>
+                <p>{{ team_report.strengths }}</p>
+            </div>
+            <div class="report-item">
+                <div class="report-label">Risks</div>
+                <p>{{ team_report.risks }}</p>
+            </div>
+            <div class="report-item">
+                <div class="report-label">Watch Players</div>
+                <p>{{ team_report.watch_players }}</p>
+            </div>
+            <div class="report-foot">
+                <span>{{ team_report.evidence_note }}</span>
+                <strong>{{ team_report.prompt_version or "-" }} | {{ team_report.model_name or "-" }}</strong>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-note">
+            No saved AI team report yet. Run <code>uv run python main.py generate-team-report "{{ team.team_name }}" --confirm-save</code>.
+        </div>
+        {% endif %}
+    </section>
+
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>Squad Shape</h2>
+        </div>
+        <div class="mini-table">
+            <div class="mini-table-row"><span>Goalkeepers</span><strong>{{ team.position_counts.get('GK', 0) }}</strong></div>
+            <div class="mini-table-row"><span>Defenders</span><strong>{{ team.position_counts.get('DF', 0) }}</strong></div>
+            <div class="mini-table-row"><span>Midfielders</span><strong>{{ team.position_counts.get('MF', 0) }}</strong></div>
+            <div class="mini-table-row"><span>Forwards</span><strong>{{ team.position_counts.get('FW', 0) }}</strong></div>
+            <div class="mini-table-row"><span>Average Caps</span><strong>{{ "%.1f"|format(team.average_caps) }}</strong></div>
+            <div class="mini-table-row"><span>Captains</span><strong>{{ team.captains|join(", ") if team.captains else "-" }}</strong></div>
+        </div>
+    </section>
+
+    <section class="panel-section">
+        <div class="section-head">
+            <h2>Top Contributors</h2>
+        </div>
+        <div class="stacked-mini">
+            <div>
+                <h3>Most Capped</h3>
+                <div class="mini-table">
+                {% for row in team.top_caps %}
+                <div class="mini-table-row">
+                    <a href="/players/{{ row.player_id }}">{{ row.full_name }}</a>
+                    <strong>{{ row.caps }} caps</strong>
+                </div>
+                {% endfor %}
+                </div>
+            </div>
+            <div>
+                <h3>Top Scorers</h3>
+                <div class="mini-table">
+                {% for row in team.top_goals %}
+                <div class="mini-table-row">
+                    <a href="/players/{{ row.player_id }}">{{ row.full_name }}</a>
+                    <strong>{{ row.goals }} goals</strong>
+                </div>
+                {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+</section>
+
+<section class="panel-section">
+    <div class="section-head">
+        <h2>Squad List</h2>
+        <a href="{{ team.official_page_url }}" target="_blank" rel="noreferrer">Source</a>
+    </div>
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Pos.</th>
+                    <th>Player</th>
+                    <th>Caps</th>
+                    <th>Goals</th>
+                    <th>Club</th>
+                    <th>Birth Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in team.squad %}
+                <tr>
+                    <td>{{ row.shirt_number or "-" }}</td>
+                    <td>{{ row.position_group or "-" }}</td>
+                    <td>
+                        <a href="/players/{{ row.player_id }}">{{ row.full_name }}</a>
+                        {% if row.is_captain %}<span class="inline-badge">C</span>{% endif %}
+                    </td>
+                    <td>{{ row.caps or 0 }}</td>
+                    <td>{{ row.goals or 0 }}</td>
+                    <td>{{ row.club_name or "-" }}</td>
+                    <td>{{ row.birth_date or "-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Teams | World Cup Squad Advisor{% endblock %}
+
+{% block content %}
+<section class="panel-section">
+    <form method="get" action="/teams" class="filter-row">
+        <label class="field">
+            <span>Group</span>
+            <select name="group">
+                <option value="">All groups</option>
+                {% for group_name in groups %}
+                <option value="{{ group_name }}" {% if selected_group == group_name %}selected{% endif %}>{{ group_name }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit">Apply</button>
+    </form>
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Team</th>
+                    <th>Group</th>
+                    <th>Squad</th>
+                    <th>Caps</th>
+                    <th>Goals</th>
+                    <th>Positions</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for team in teams %}
+                <tr>
+                    <td>{{ team.team_name }}</td>
+                    <td>{{ team.group_name }}</td>
+                    <td>{{ team.squad_size }}</td>
+                    <td>{{ team.total_caps }}</td>
+                    <td>{{ team.total_goals }}</td>
+                    <td>
+                        GK {{ team.position_counts.get('GK', 0) }} /
+                        DF {{ team.position_counts.get('DF', 0) }} /
+                        MF {{ team.position_counts.get('MF', 0) }} /
+                        FW {{ team.position_counts.get('FW', 0) }}
+                    </td>
+                    <td><a href="/teams/{{ team.team_id }}">Open</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
