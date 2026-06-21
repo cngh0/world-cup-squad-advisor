@@ -6,3 +6,4 @@ __pycache__/
 .logs/
 .uploads/
 *.log
+PROJECT_BUILD_LOG.md
